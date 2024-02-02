@@ -1,0 +1,13 @@
+name = "Reinforcement"
+uuid = "b0d2ef1f-b61d-4d7f-9e22-756cf5aa9143"
+authors = ["José Luis Castro García"]
+version = "1.0.0-DEV"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
