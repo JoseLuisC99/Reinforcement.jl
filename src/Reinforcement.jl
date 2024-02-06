@@ -6,6 +6,8 @@ include("value.jl")
 include("qfunctions.jl")
 
 include("envs/gridworld.jl")
+include("envs/dummy.jl")
 include("algs/value_iteration.jl")
+include("algs/bandits.jl")
 
 end
