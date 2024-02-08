@@ -1,11 +1,11 @@
-export ValueIteration, init!
+export ValueIteration, run!
 
 struct ValueIteration{T}
     env::AbstractEnv
     V::TabularValueFunction{T}
 end
 
-function init!(A::DataType, val_iteration::ValueIteration{T}; max_iters::Int64 = 100, θ::Float64 = 0.001) where {T}
+function run!(A::DataType, val_iteration::ValueIteration{T}; max_iters::Int64 = 100, θ::Float64 = 0.001) where {T}
     for i ∈ 1:max_iters
         Δ = 0.0
         new_values = TabularValueFunction{T}()

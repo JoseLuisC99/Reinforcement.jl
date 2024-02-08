@@ -20,7 +20,7 @@ begin
 	V = TabularValueFunction{GridState}()
 
 	alg = ValueIteration(env, V)
-	init!(GridAction, alg)
+	run!(GridAction, alg)
 end
 
 # ╔═╡ 6cc4a477-dbdb-4c94-a6aa-d84ebf87a016
@@ -35,7 +35,7 @@ end 400 300
 # ╔═╡ 99d57c1c-05e7-4140-ab2c-536b8e4a90ee
 @draw begin 
 	origin(Point(50, 50))
-	show_value_function(env, V, width=100.0, height=100.0)
+	show_V_function(env, V, width=100.0, height=100.0)
 end 400 300
 
 # ╔═╡ Cell order:

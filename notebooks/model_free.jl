@@ -19,8 +19,9 @@ begin
 	env = GridWorld()
 	nbandit = EpsilonGreedy()
 	qfunction = QTable{GridState, GridAction}()
+	td = SARSA(env, nbandit, qfunction)
 
-	alg = SARSA(env, nbandit, qfunction)
+	alg = NStepLearner(td, 5)
 	init!(alg)
 end
 

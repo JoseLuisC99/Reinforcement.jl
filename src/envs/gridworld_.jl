@@ -1,6 +1,6 @@
 export GridAction, GridState, GridTerminalState, GridWorld, Up, Right, Left, Down, Terminal,
-    show_policy, show_V_function, show_Q_function, Maze
-using Luxor, Printf, Distributions
+    show_policy, show_value_function, maze
+using Luxor, Printf
 
 @enum GridAction Up Right Left Down Terminal
 const GridState = Tuple{Int64, Int64}
@@ -16,7 +16,7 @@ struct GridWorld <: AbstractEnv
     initial_state::GridState
     goals::Dict{GridState, Real}
 
-    GridWorld(width::Int64, height::Int64, blocked_states::Vector{GridState}, initial_state::GridState, goals::Dict{GridState, <:Real}) = new(
+    GridWorld(width::Int64, height::Int64, blocked_states::Vector{GridState}, initial_state::GridState, goals::Dict{GridState, Real}) = new(
         0.1, width, height, 0.9, 0.0, blocked_states, initial_state, goals
     )
     GridWorld(width::Int64, height::Int64) = new(
@@ -28,9 +28,9 @@ struct GridWorld <: AbstractEnv
     GridWorld() = GridWorld(4, 3)
 end
 
-function Maze(n::Int64, m::Int64, start::Tuple{Int64, Int64})
+function maze(n::Int64, m::Int64, start::Tuple{Int64, Int64})
     vector_maze, exit = maze_dfs(n, m, start)
-    bloked_states = Vector{GridState}()
+    bloked_states = Vector{GridState}[]
 
     for i ∈ 1:n
         for j ∈ 1:m
@@ -170,7 +170,7 @@ get_discount_factor(env::GridWorld) = env.γ
 get_initial_state(env::GridWorld) = env.initial_state
 get_goal_states(env::GridWorld) = env.goals
 
-function draw_arrow(center::Point, dir::Union{GridAction, Nothing}; length::Real = 20.0)
+function draw_arrow(center::Point, dir::Union{GridAction, Nothing}; length::Float64 = 20.0)
 	sethue("skyblue4")
 
 	if dir === Up::GridAction
@@ -192,7 +192,7 @@ function draw_arrow(center::Point, dir::Union{GridAction, Nothing}; length::Real
 	end
 end
 
-function plot_grid_world(grid_world::GridWorld; width::Real = 50.0, height::Real = 50.0)
+function plot_grid_world(grid_world::GridWorld; width::Float64 = 50.0, height::Float64 = 50.0)
     background("transparent")
 
     for goal in grid_world.goals
@@ -218,7 +218,7 @@ function plot_grid_world(grid_world::GridWorld; width::Real = 50.0, height::Real
     end
 end
 
-function show_V_function(grid_world::GridWorld, V::AbstractValueFunc; width::Real = 50.0, height::Real = 50.0)
+function show_value_function(grid_world::GridWorld, V::AbstractValueFunc; width::Float64 = 50.0, height::Float64 = 50.0)
     plot_grid_world(grid_world, width = width, height = height)
 	
     sethue("black")
@@ -233,55 +233,7 @@ function show_V_function(grid_world::GridWorld, V::AbstractValueFunc; width::Rea
     end
 end
 
-function show_Q_function(grid_world::GridWorld, Q::QFunction; width::Real = 50.0, height::Real = 50.0)
-    fontsize(height / 8)
-    for i in 1:grid_world.width
-        for j in 1:grid_world.height
-			sethue("gray80")
-			if (i, j) ∈ grid_world.blocked_states || haskey(grid_world.goals, (i, j))
-				continue
-			end
-            x, y = i - 1, grid_world.height - j
-            line(
-				Point((x - 0.5) * width, (y - 0.5) * height), 
-				Point((x + 0.5) * width, (y + 0.5) * height), 
-				:stroke)
-			line(
-				Point((x + 0.5) * width, (y - 0.5) * height), 
-				Point((x - 0.5) * width, (y + 0.5) * height), 
-				:stroke)
-
-			qvalues_pos = [
-				(0, -0.25, Up, :center, :bottom), 
-				(0.25, 0, Right, :center, :middle), 
-				(0, 0.25, Down, :center, :top), 
-				(-0.25, 0, Left, :center, :middle)
-			]
-			for (xp, yp, action, halign, valign) ∈ qvalues_pos
-				str = @sprintf "%.2f" get_Q_value(Q, (i, j), action)
-				if get_Q_value(Q, (i, j), action) < 0.0001
-					sethue("gray80")
-				else
-					sethue("gray20")
-				end
-				text(str, 
-					Point((x + xp) *  width, (y + yp) * height), 
-					halign=halign, valign=valign)
-			end
-        end
-    end
-
-	plot_grid_world(grid_world, width = width, height = height)
-	sethue("black")
-    fontsize(height / 4)
-	for ((i, j), reward) ∈ grid_world.goals
-		x, y = i - 1, grid_world.height - j
-		str = @sprintf "%.2f" reward
-		text(str, Point(x *  width, y * height), halign=:center, valign=:middle)
-	end
-end
-
-function show_policy(grid_world::GridWorld, policy::AbstractPolicy; width::Real = 50.0, height::Real = 50.0)
+function show_policy(grid_world::GridWorld, policy::AbstractPolicy; width::Float64 = 50.0, height::Float64 = 50.0)
     plot_grid_world(grid_world, width = width, height = height)
 
     sethue("black")
@@ -302,40 +254,41 @@ function show_policy(grid_world::GridWorld, policy::AbstractPolicy; width::Real 
 end
 
 function neighbors(maze::Matrix{Int64}, i::Int64, j::Int64)::Vector{Tuple{Int64, Int64}}
-    n, m = size(maze)
-    @assert 1 <= i <= n
-    @assert 1 <= j <= m
+	n, m = size(maze)
+	@assert 1 <= i <= n
+	@assert 1 <= j <= m
 
-    _neighbors = Tuple{Int64, Int64}[]
-    for (x, y) ∈ shuffle([(-2, 0), (2, 0), (0, -2), (0, 2)])
-        if 1 <= i + x <= n && 1 <= j + y <= m
-            push!(_neighbors, (i + x, j + y))
-        end
-    end
+	_neighbors = Tuple{Int64, Int64}[]
+	for (x, y) ∈ shuffle([(-2, 0), (2, 0), (0, -2), (0, 2)])
+		if 1 <= i + x <= n && 1 <= j + y <= m
+			push!(_neighbors, (i + x, j + y))
+		end
+	end
 
-    return _neighbors
+	return _neighbors
 end
 
 function maze_dfs(n::Int64, m::Int64, start::Tuple{Int64, Int64})::Tuple{Matrix{Int64}, Tuple{Int64, Int64}}
-    maze = ones(Int64, (n, m))
-    stack = [start]
-    maze[start...] = 0
-    last = nothing
+	maze = ones(Int64, (n, m))
+	visited = Dict{Tuple{Int64, Int64}, Bool}()
+	stack = [start]
+	maze[start...] = 0
+	last = nothing
 
-    while !isempty(stack)
-        next = pop!(stack)
-        for v ∈ neighbors(maze, next...)
-            maze[v...] == 0 && continue
-            maze[v...] = 0
-            push!(stack, v)
+	while !isempty(stack)
+		next = pop!(stack)
+		for v ∈ neighbors(maze, next...)
+			maze[v...] == 0 && continue
+			maze[v...] = 0
+			push!(stack, v)
 
-            x1, y1 = next
-            x2, y2 = v
-            x, y = ([x1, y1] + [x2, y2]) .÷ 2
-            maze[x, y] = 0
-            last = v
-        end
-    end
+			x1, y1 = next
+			x2, y2 = v
+			x, y = ([x1, y1] + [x2, y2]) .÷ 2
+			maze[x, y] = 0
+			last = v
+		end
+	end
 
-    return maze, last
+	return maze, last
 end
