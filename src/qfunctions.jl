@@ -33,7 +33,7 @@ end
 
 """ Extract a policy for this Q-function  """
 function extract_policy(Q::QFunction{T, U}, env::AbstractEnv)::AbstractPolicy{T} where {T, U}
-    policy = TabularPolicy()
+    policy = TabularPolicy{T, U}()
 
     for state ∈ get_states(env)
         (action, _) = get_max_Q(Q, state, get_actions(env, state))

@@ -1,7 +1,18 @@
 export  AbstractEnv, get_states, get_actions, get_transitions, get_reward, is_terminal, 
-    get_discount_factor, get_initial_state, get_goal_states
+    get_discount_factor, get_initial_state, get_goal_states, execute
+using Distributions
 
 abstract type AbstractEnv end
+
+function execute(env::AbstractEnv, state::T, action::U)::Tuple{T, Float64} where {T, U}
+    transitions = get_transitions(env, state, action)
+    states = map(x -> x[1], transitions)
+    probs = map(x -> x[2], transitions)
+    next_state = sample(states, Distributions.Weights(probs))
+    reward = get_reward(env, state, action, next_state)
+
+    return (next_state, reward)
+end
 
 # """ Return all states of this environment """
 # function get_states(env::AbstractEnv)

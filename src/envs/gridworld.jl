@@ -1,6 +1,6 @@
 export GridAction, GridState, GridTerminalState, GridWorld, Up, Right, Left, Down, Terminal,
-    show_policy, show_value_function
-using Luxor, Printf
+    show_policy, show_V_function, show_Q_function
+using Luxor, Printf, Distributions
 
 @enum GridAction Up Right Left Down Terminal
 const GridState = Tuple{Int64, Int64}
@@ -150,7 +150,7 @@ get_discount_factor(env::GridWorld) = env.γ
 get_initial_state(env::GridWorld) = env.initial_state
 get_goal_states(env::GridWorld) = env.goals
 
-function draw_arrow(center::Point, dir::Union{GridAction, Nothing}; length::Float64 = 20.0)
+function draw_arrow(center::Point, dir::Union{GridAction, Nothing}; length::Real = 20.0)
 	sethue("skyblue4")
 
 	if dir === Up::GridAction
@@ -172,7 +172,7 @@ function draw_arrow(center::Point, dir::Union{GridAction, Nothing}; length::Floa
 	end
 end
 
-function plot_grid_world(grid_world::GridWorld; width::Float64 = 50.0, height::Float64 = 50.0)
+function plot_grid_world(grid_world::GridWorld; width::Real = 50.0, height::Real = 50.0)
     background("transparent")
 
     for goal in grid_world.goals
@@ -198,7 +198,7 @@ function plot_grid_world(grid_world::GridWorld; width::Float64 = 50.0, height::F
     end
 end
 
-function show_value_function(grid_world::GridWorld, V::AbstractValueFunc; width::Float64 = 50.0, height::Float64 = 50.0)
+function show_V_function(grid_world::GridWorld, V::AbstractValueFunc; width::Real = 50.0, height::Real = 50.0)
     plot_grid_world(grid_world, width = width, height = height)
 	
     sethue("black")
@@ -213,7 +213,55 @@ function show_value_function(grid_world::GridWorld, V::AbstractValueFunc; width:
     end
 end
 
-function show_policy(grid_world::GridWorld, policy::AbstractPolicy; width::Float64 = 50.0, height::Float64 = 50.0)
+function show_Q_function(grid_world::GridWorld, Q::QFunction; width::Real = 50.0, height::Real = 50.0)
+    fontsize(height / 8)
+    for i in 1:grid_world.width
+        for j in 1:grid_world.height
+			sethue("gray80")
+			if (i, j) ∈ grid_world.blocked_states || haskey(grid_world.goals, (i, j))
+				continue
+			end
+            x, y = i - 1, grid_world.height - j
+            line(
+				Point((x - 0.5) * width, (y - 0.5) * height), 
+				Point((x + 0.5) * width, (y + 0.5) * height), 
+				:stroke)
+			line(
+				Point((x + 0.5) * width, (y - 0.5) * height), 
+				Point((x - 0.5) * width, (y + 0.5) * height), 
+				:stroke)
+
+			qvalues_pos = [
+				(0, -0.25, Up, :center, :bottom), 
+				(0.25, 0, Right, :center, :middle), 
+				(0, 0.25, Down, :center, :top), 
+				(-0.25, 0, Left, :center, :middle)
+			]
+			for (xp, yp, action, halign, valign) ∈ qvalues_pos
+				str = @sprintf "%.2f" get_Q_value(Q, (i, j), action)
+				if str == "0.00"
+					sethue("gray80")
+				else
+					sethue("gray20")
+				end
+				text(str, 
+					Point((x + xp) *  width, (y + yp) * height), 
+					halign=halign, valign=valign)
+			end
+        end
+    end
+
+	plot_grid_world(grid_world, width = width, height = height)
+	sethue("black")
+    fontsize(height / 4)
+	for ((i, j), reward) ∈ grid_world.goals
+		x, y = i - 1, grid_world.height - j
+		str = @sprintf "%.2f" reward
+		text(str, Point(x *  width, y * height), halign=:center, valign=:middle)
+	end
+end
+
+function show_policy(grid_world::GridWorld, policy::AbstractPolicy; width::Real = 50.0, height::Real = 50.0)
     plot_grid_world(grid_world, width = width, height = height)
 
     sethue("black")

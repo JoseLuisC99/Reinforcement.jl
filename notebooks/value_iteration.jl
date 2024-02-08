@@ -11,7 +11,7 @@ begin
 	Pkg.instantiate()
 
 	using Reinforcement
-	using Luxor, PlutoUI
+	using Luxor, PlutoUI, Distributions
 end
 
 # ╔═╡ b221c7cd-6b18-4e20-9b28-e05cbc5ec47b

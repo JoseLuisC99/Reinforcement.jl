@@ -21,7 +21,7 @@ end
 
 function get_transitions(env::DummyEnv, state::DummyState, action::DummyAction)::Vector{Tuple{DummyState, Float64}}
     @assert action ∈ env.actions
-    return [(action, env.probs[action])]
+    return [(action, 1.0)]
 end
 
 function get_reward(env::DummyEnv, state::DummyState, action::DummyAction, next_state::DummyState)::Float64
