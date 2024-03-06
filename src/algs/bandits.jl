@@ -1,4 +1,4 @@
-export MultiArmedBandit, EpsilonGreedy, EpsilonDecreasing, SoftmaxBandit, UpperConfidenceBounds, select, reset
+export MultiArmedBandit, EpsilonGreedy, EpsilonDecreasing, SoftmaxBandit, UpperConfidenceBounds, select, reset!
 using Random
 
 """ A multi-armed bandit is defined by a set of random variables that we select iteratively, observing the reward 
@@ -25,7 +25,7 @@ function select(nbandit::EpsilonGreedy, state::T, actions::Vector{U}, qfunction:
     return argmax_q
 end
 
-function reset(nbandit::EpsilonGreedy)::Nothing
+function reset!(nbandit::EpsilonGreedy)::Nothing
     return
 end
 
@@ -43,7 +43,7 @@ function select(nbandit::EpsilonDecreasing, state::T, actions::Vector{U}, qfunct
     return argmax_q
 end
 
-function reset(nbandit::EpsilonDecreasing)::Nothing
+function reset!(nbandit::EpsilonDecreasing)::Nothing
     nbandit.ϵ_greedy.ϵ = nbandit.ϵ
     return
 end
@@ -72,15 +72,17 @@ function select(nbandit::SoftmaxBandit, state::T, actions::Vector{U}, qfunction:
     end
 end
 
-function reset(nbandit::SoftmaxBandit)::Nothing
+function reset!(nbandit::SoftmaxBandit)::Nothing
     return
 end
 
 mutable struct UpperConfidenceBounds{U} <: MultiArmedBandit
     t::Int64
+    c::Real
     N::Dict{U, Int64}
 
-    UpperConfidenceBounds{U}() where {U}= new(0, Dict{U, Int64}())
+    UpperConfidenceBounds{U}() where {U}= new(0, 1.0, Dict{U, Int64}())
+    UpperConfidenceBounds{U}(c::Real) where {U}= new(0, c, Dict{U, Int64}())
 end
 
 function select(nbandit::UpperConfidenceBounds{U}, state::T, actions::Vector{U}, qfunction::QFunction{T, U})::U where {T, U}
@@ -96,7 +98,7 @@ function select(nbandit::UpperConfidenceBounds{U}, state::T, actions::Vector{U},
     max_value = -Inf
 
     for action ∈ actions
-        value = get_Q_value(qfunction, state, action) + sqrt(2 * log(nbandit.t) / nbandit.N[action])
+        value = get_Q_value(qfunction, state, action) + nbandit.c * sqrt(2 * log(nbandit.t) / nbandit.N[action])
         if value > max_value
             max_actions = [action]
             max_value = value
@@ -112,7 +114,8 @@ function select(nbandit::UpperConfidenceBounds{U}, state::T, actions::Vector{U},
     return selected_action
 end
 
-function reset(nbandit::UpperConfidenceBounds)::Nothing
+function reset!(nbandit::UpperConfidenceBounds)::Nothing
     nbandit.t = 0
     empty!(nbandit.N)
+    return
 end

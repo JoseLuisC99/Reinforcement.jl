@@ -50,6 +50,7 @@ struct QTable{T, U} <: QFunction{T, U}
     default::Real
 
     QTable{T, U}() where {T, U} = new(Dict{Tuple{T, U}, Real}(), 0.0)
+    QTable{T, U}(x::Real) where {T, U} = new(Dict{Tuple{T, U}, Real}(), x)
 end
 
 function update!(Q::QTable{T, U}, state::T, action::U, Δ::Real)::Nothing where {T, U}
