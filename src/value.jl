@@ -18,19 +18,24 @@ function get_Q_value(V::AbstractValueFunc{T}, env::AbstractEnv, state::T, action
     return Q_value
 end
 
-function extract_policy(U::DataType, V::AbstractValueFunc{T}, env::AbstractEnv)::AbstractPolicy where {T}
+function extract_policy(U::DataType, V::AbstractValueFunc{T}, env::AbstractEnv; tie_criterion::Function = rand)::AbstractPolicy where {T}
     policy = TabularPolicy{T, U}()
 
     for state in get_states(env)
         max_q = -Inf
-        for action in get_actions(env, state)
-            q_value = get_Q_value(V, env, state, action)
+        argmax_q = []
 
-            if q_value > max_q
-                update!(policy, state, action)
+        for action ∈ get_actions(env, state)
+            q_value = get_Q_value(V, env, state, action)
+            if q_value == max_q
+                push!(argmax_q, action)
+            elseif q_value > max_q
+                argmax_q = [action]
                 max_q = q_value
             end
         end
+
+        update!(policy, state, tie_criterion(argmax_q))
     end
 
     return policy

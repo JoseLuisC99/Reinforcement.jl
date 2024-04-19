@@ -14,6 +14,7 @@ struct TabularPolicy{T, U} <: AbstractPolicy{T, U}
     default_action::Union{U, Nothing}
 
     TabularPolicy{T, U}() where {T, U} = new(Dict{T, U}(), nothing)
+    TabularPolicy{T, U}(default_acction::U) where {T, U} = new(Dict{T, U}(), default_acction)
 end
 
 """ State to Action table. If state is not present we return default action."""

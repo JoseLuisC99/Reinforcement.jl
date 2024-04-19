@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.38
+# v0.19.40
 
 using Markdown
 using InteractiveUtils
@@ -11,7 +11,7 @@ begin
 	Pkg.instantiate()
 
 	using Reinforcement
-	using Luxor, PlutoUI, Distributions
+	using Luxor, PlutoUI, Distributions, Printf
 end
 
 # ╔═╡ b221c7cd-6b18-4e20-9b28-e05cbc5ec47b

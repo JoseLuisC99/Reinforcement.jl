@@ -16,19 +16,23 @@ abstract type QFunction{T, U} end
 """ Return a pair containing the action and Q-value, where the
     action has the maximum Q-value in state
 """
-function get_max_Q(Q::QFunction{T, U}, state::T, actions::Vector{U})::Tuple{U, Real} where {T, U}
-    arg_max_q = nothing
+function get_max_Q(Q::QFunction{T, U}, state::T, actions::Vector{U}; tie_criterion::Function = rand)::Tuple{U, Real} where {T, U}
     max_q = -Inf
+    arg_max_q = U[]
 
     for action ∈ actions
         value = get_Q_value(Q, state, action)
-        if max_q < value
-            arg_max_q = action
+
+        
+        if max_q == value
+            push!(arg_max_q, action)
+        elseif max_q < value
+            arg_max_q = [action]
             max_q = value
         end
     end
 
-    return (arg_max_q, max_q)
+    return (tie_criterion(arg_max_q), max_q)
 end
 
 """ Extract a policy for this Q-function  """
